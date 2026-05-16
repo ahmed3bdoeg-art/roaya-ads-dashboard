@@ -1002,11 +1002,19 @@ def render_platform_comparison(df: pd.DataFrame):
     for i, (_, row) in enumerate(plat.iterrows()):
         with cols[i]:
             icon = '📘' if 'Meta' in row['Platform'] else '🎵'
+            metric_rows_html = ''.join([
+                f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">'
+                f'<span style="color:var(--text-secondary);font-size:0.82rem">{m}</span>'
+                f'<span style="font-weight:700;font-size:0.9rem">'
+                f'{fmt_spend(row[m]) if m == "Spend" else fmt_pct(row[m]) if m in ["CTR", "CVR"] else fmt_num(row[m])}'
+                f'</span></div>'
+                for m in metrics
+            ])
             st.markdown(f"""
             <div class="card" style="text-align:center;border-top:4px solid {CHART_COLORS[i]}">
                 <div style="font-size:2rem;margin-bottom:0.5rem">{icon}</div>
                 <div style="font-weight:800;font-size:1.1rem;margin-bottom:1.25rem">{row['Platform']}</div>
-                {"".join([f'<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text-secondary);font-size:0.82rem">{m}</span><span style="font-weight:700;font-size:0.9rem">{fmt_spend(row[m]) if m=="Spend" else fmt_pct(row[m]) if m in ["CTR","CVR"] else fmt_num(row[m])}</span></div>' for m in metrics])}
+                {metric_rows_html}
             </div>
             """, unsafe_allow_html=True)
 
@@ -1324,11 +1332,6 @@ def render_export(df: pd.DataFrame, file_log: list):
         st.download_button('⬇️ Download Excel', excel_bytes, 'roaya_full_report.xlsx',
                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', use_container_width=True)
 
-    st.markdown("""
-    <div class="card" style="margin-top:1.5rem">
-        <div class="section-header"><span class="section-title">Export Contents</span></div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
-    """, unsafe_allow_html=True)
     sheets = [
         ('📋', 'Clean Data', 'All normalized rows'),
         ('📊', 'Platform Summary', 'Aggregated by platform'),
@@ -1338,15 +1341,22 @@ def render_export(df: pd.DataFrame, file_log: list):
         ('💡', 'Recommended Actions', 'AI-generated recommendations'),
         ('📁', 'Files Log', 'Upload metadata'),
     ]
-    for icon, name, desc in sheets:
-        st.markdown(f"""
-        <div style="background:var(--background);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px">
-            <div style="font-size:1.4rem;margin-bottom:6px">{icon}</div>
-            <div style="font-weight:600;font-size:0.88rem">{name}</div>
-            <div style="color:var(--text-secondary);font-size:0.75rem">{desc}</div>
+    sheet_items_html = ''.join([
+        f'<div style="background:var(--background);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px">'
+        f'<div style="font-size:1.4rem;margin-bottom:6px">{icon}</div>'
+        f'<div style="font-weight:600;font-size:0.88rem">{name}</div>'
+        f'<div style="color:var(--text-secondary);font-size:0.75rem">{desc}</div>'
+        f'</div>'
+        for icon, name, desc in sheets
+    ])
+    st.markdown(f"""
+    <div class="card" style="margin-top:1.5rem">
+        <div class="section-header"><span class="section-title">Export Contents</span></div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
+            {sheet_items_html}
         </div>
-        """, unsafe_allow_html=True)
-    st.markdown('</div></div>', unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
 # ─── SIDEBAR ───────────────────────────────────────────────────────────────────
 def render_sidebar():
